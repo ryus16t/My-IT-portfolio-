@@ -1,0 +1,609 @@
+```html
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>プロのアルゴリズム活用図解 - 暗号編</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    /* アニメーション定義 */
+    @keyframes typing {
+      from { width: 0 }
+      to { width: 100% }
+    }
+    @keyframes blink-caret {
+      from, to { border-color: transparent }
+      50% { border-color: #22c55e; } /* Tailwind green-500 */
+    }
+    @keyframes spin-fast {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(1080deg); }
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    @keyframes fly-right-left {
+      0% { right: 10%; top: 50%; opacity: 0; transform: scale(0.5); }
+      20% { opacity: 1; transform: scale(1.2); }
+      80% { opacity: 1; transform: scale(1.2); }
+      100% { right: 80%; top: 50%; opacity: 0; transform: scale(0.5); }
+    }
+    @keyframes fly-left-right {
+      0% { left: 10%; top: 50%; opacity: 0; transform: scale(0.5); }
+      20% { opacity: 1; transform: scale(1.2); }
+      80% { opacity: 1; transform: scale(1.2); }
+      100% { left: 80%; top: 50%; opacity: 0; transform: scale(0.5); }
+    }
+    @keyframes hacker-laugh {
+      0%, 100% { transform: scale(1) rotate(0); color: #ef4444; }
+      25% { transform: scale(1.2) rotate(-10deg); color: #dc2626; }
+      50% { transform: scale(1.2) rotate(10deg); color: #ef4444; }
+      75% { transform: scale(1.2) rotate(-10deg); color: #b91c1c; }
+    }
+
+    /* カスタムクラス */
+    .cyber-bg {
+      background-color: #050b14;
+      background-image: 
+        linear-gradient(rgba(34, 197, 94, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(34, 197, 94, 0.1) 1px, transparent 1px);
+      background-size: 40px 40px;
+      color: #e2e8f0;
+    }
+    .neon-text {
+      text-shadow: 0 0 10px rgba(34, 197, 94, 0.7);
+    }
+    .neon-border {
+      box-shadow: 0 0 15px rgba(34, 197, 94, 0.3), inset 0 0 15px rgba(34, 197, 94, 0.1);
+      border-color: rgba(34, 197, 94, 0.5);
+    }
+    .typewriter {
+      overflow: hidden;
+      white-space: nowrap;
+      border-right: .15em solid #22c55e;
+      animation: typing 1s steps(40, end), blink-caret .75s step-end infinite;
+    }
+    
+    .anim-fly-rl { animation: fly-right-left 2s ease-in-out forwards; }
+    .anim-fly-lr { animation: fly-left-right 2s ease-in-out forwards; }
+    .anim-hacker { animation: hacker-laugh 0.5s infinite; }
+    .mixer-active { animation: spin-fast 1s cubic-bezier(0.1, 0.7, 0.1, 1) forwards; }
+
+    /* スクロールバー */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #020617; }
+    ::-webkit-scrollbar-thumb { background: #22c55e; border-radius: 4px; }
+  </style>
+</head>
+<body class="font-sans min-h-screen cyber-bg pb-16">
+
+  <header class="bg-slate-950/80 backdrop-blur border-b border-green-900/50 py-8 px-4 text-center sticky top-0 z-50 shadow-[0_4px_30px_rgba(34,197,94,0.1)]">
+    <div class="max-w-4xl mx-auto">
+      <div class="inline-block bg-green-900/30 text-green-400 px-3 py-1 rounded-full text-xs font-mono font-bold mb-3 border border-green-700/50">
+        <i class="fas fa-user-secret mr-1"></i> もっと知りたい！アルゴリズムの世界 第3弾
+      </div>
+      <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight mb-2 text-transparent bg-clip-text bg-gradient-to-r from-green-400 via-emerald-300 to-cyan-400">
+        暗号アルゴリズムの魔法
+      </h1>
+      <p class="text-slate-400 text-sm md:text-base font-mono">Cryptography: How to protect our secrets.</p>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-10 space-y-20">
+
+    <!-- セクション1: シーザー暗号 (共通鍵暗号の基礎) -->
+    <section>
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-12 h-12 rounded-xl bg-slate-900 flex items-center justify-center border-2 border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.4)]">
+          <i class="fas fa-key text-2xl text-green-400"></i>
+        </div>
+        <div>
+          <h2 class="text-2xl md:text-3xl font-bold text-white">第1の魔法：「ずらす」アルゴリズム</h2>
+          <span class="text-green-500 text-sm font-mono">Caesar Cipher (Symmetric Key)</span>
+        </div>
+      </div>
+      
+      <div class="bg-slate-900/80 backdrop-blur rounded-2xl border neon-border p-6 shadow-2xl relative overflow-hidden">
+        <div class="absolute -right-10 -top-10 opacity-10 text-9xl text-green-500 pointer-events-none"><i class="fas fa-lock"></i></div>
+        
+        <div class="mb-8 text-slate-300 text-sm leading-relaxed relative z-10">
+          <p class="mb-2"><strong>【歴史と基礎】</strong> 古代ローマの英雄カエサル（シーザー）が使ったとされる、人類最古レベルの暗号アルゴリズムです。</p>
+          <p>ルールは超シンプル。<strong>「アルファベットを決められた数だけズラす」</strong>だけ！<br>
+          この「何文字ずらすか」というルールのことを、暗号の世界では<strong>「鍵（キー）」</strong>と呼びます。<br>
+          英語を入れて、鍵のスライダーを動かして暗号文を作ってみましょう。</p>
+        </div>
+
+        <div class="flex flex-col md:flex-row gap-8 relative z-10">
+          <!-- 送信者側 (A) -->
+          <div class="flex-1 bg-slate-800 rounded-xl p-5 border border-slate-700">
+            <h3 class="text-lg font-bold text-white mb-4"><i class="fas fa-paper-plane text-blue-400 mr-2"></i> 送信する人</h3>
+            
+            <label class="block text-xs text-slate-400 mb-1">平文（元のメッセージ：英語のみ）</label>
+            <input type="text" id="caesar-input" value="HELLO WORLD" oninput="updateCaesar()" class="w-full bg-slate-950 border border-slate-600 rounded p-2 text-white font-mono mb-4 focus:outline-none focus:border-green-500 uppercase">
+            
+            <div class="bg-slate-900 p-4 rounded-lg border border-slate-700">
+              <div class="flex justify-between items-center mb-2">
+                <label class="text-xs text-slate-400 font-bold"><i class="fas fa-key text-yellow-500 mr-1"></i> 暗号化の「鍵」</label>
+                <span class="text-yellow-400 font-mono font-bold text-lg"><span id="caesar-shift-val">3</span> 文字ずらす</span>
+              </div>
+              <input type="range" id="caesar-shift" min="1" max="25" value="3" oninput="updateCaesar()" class="w-full accent-yellow-500">
+            </div>
+
+            <div class="mt-4">
+              <label class="block text-xs text-slate-400 mb-1">暗号文（インターネットを通る謎の文字列）</label>
+              <div id="caesar-output" class="w-full bg-black/50 border border-green-500/50 rounded p-3 text-green-400 font-mono tracking-widest text-lg neon-text break-all min-h-[3rem]">
+                KHOOR ZRUOG
+              </div>
+            </div>
+          </div>
+
+          <!-- 通信経路 -->
+          <div class="flex items-center justify-center py-4">
+            <div class="text-center text-slate-500">
+              <i class="fas fa-wifi text-2xl mb-1"></i><br>
+              <i class="fas fa-arrow-right animate-pulse"></i>
+            </div>
+          </div>
+
+          <!-- 受信者側 (B) -->
+          <div class="flex-1 bg-slate-800 rounded-xl p-5 border border-slate-700">
+            <h3 class="text-lg font-bold text-white mb-4"><i class="fas fa-inbox text-purple-400 mr-2"></i> 受信する人</h3>
+            
+            <div class="bg-slate-900 p-4 rounded-lg border border-slate-700 mb-4 opacity-50 relative group">
+              <!-- ホバーでヒント -->
+              <div class="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white text-xs p-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                暗号化と同じ鍵（ずらす数）が必要です！
+              </div>
+              <div class="flex justify-between items-center mb-2">
+                <label class="text-xs text-slate-400 font-bold"><i class="fas fa-key text-yellow-500 mr-1"></i> 復号（解読）の「鍵」</label>
+                <span class="text-yellow-400 font-mono font-bold text-lg"><span id="caesar-decrypt-val">3</span> 文字戻す</span>
+              </div>
+              <!-- 表示用なので操作不可 -->
+              <input type="range" id="caesar-decrypt-slider" min="1" max="25" value="3" disabled class="w-full accent-yellow-500 opacity-50">
+            </div>
+
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">解読結果（元のメッセージ）</label>
+              <div id="caesar-decrypted" class="w-full bg-slate-950 border border-slate-600 rounded p-3 text-white font-mono text-lg break-all min-h-[3rem]">
+                HELLO WORLD
+              </div>
+            </div>
+            
+            <div class="mt-4 p-3 bg-red-900/30 border border-red-500/50 rounded-lg">
+              <h4 class="text-red-400 text-xs font-bold mb-1"><i class="fas fa-exclamation-triangle"></i> この暗号の致命的な弱点</h4>
+              <p class="text-[10px] text-slate-300">
+                暗号化する人と解読する人が**「同じ鍵（何文字ずらすか）」**を知っていないといけません。<br>
+                遠くの人と通信する時、この「鍵」自体をどうやって安全に送るのでしょうか？途中でハッカーに「鍵」を盗まれたら、暗号文は簡単に解読されてしまいます。（鍵配送問題）
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- セクション2: 公開鍵暗号 (現代の魔法) -->
+    <section>
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-12 h-12 rounded-xl bg-slate-900 flex items-center justify-center border-2 border-cyan-500 shadow-[0_0_15px_rgba(6,182,212,0.4)]">
+          <i class="fas fa-lock text-2xl text-cyan-400"></i>
+        </div>
+        <div>
+          <h2 class="text-2xl md:text-3xl font-bold text-white">第2の魔法：「開けっぱなしの南京錠」</h2>
+          <span class="text-cyan-500 text-sm font-mono">Public-Key Cryptography (RSA)</span>
+        </div>
+      </div>
+      
+      <div class="bg-slate-900/80 backdrop-blur rounded-2xl border border-cyan-900/50 p-6 shadow-2xl">
+        <div class="mb-8 text-slate-300 text-sm leading-relaxed">
+          <p class="mb-2"><strong>【現代の魔法】</strong> 「鍵をどうやって相手に送るか？」という弱点を、天才的な発想で解決したのがこのアルゴリズムです。ネットショッピングのクレジットカード送信などはすべてこれです。</p>
+          <p class="bg-cyan-950/50 p-3 border-l-4 border-cyan-500 rounded text-cyan-200">
+            <strong>天才のアイデア：</strong><br>
+            「相手に『開けっぱなしの南京錠（公開鍵）』だけを送って、メッセージにガチャンと鍵をかけてもらえばいいじゃん！開けるための本当の『鍵（秘密鍵）』は自分が持ったままで！」
+          </p>
+          <p class="mt-2 text-xs text-slate-400">アニメーションでその完璧な流れを見てみましょう。</p>
+        </div>
+
+        <!-- アニメーションエリア -->
+        <div class="relative h-96 bg-slate-950 rounded-xl border-2 border-slate-800 overflow-hidden flex items-center justify-between px-4 md:px-12">
+          <!-- 背景グリッド -->
+          <div class="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:2rem_2rem] opacity-20"></div>
+
+          <!-- アリス (送信者) -->
+          <div class="relative z-10 flex flex-col items-center w-32">
+            <div class="w-16 h-16 bg-blue-900 rounded-full flex items-center justify-center border-2 border-blue-500 mb-2 shadow-[0_0_15px_rgba(59,130,246,0.5)]">
+              <i class="fas fa-user-astronaut text-3xl text-blue-300"></i>
+            </div>
+            <div class="text-blue-400 font-bold">アリス</div>
+            <div class="text-[10px] text-slate-400">（送る人）</div>
+            
+            <div id="alice-inventory" class="mt-4 h-16 flex items-center justify-center gap-2">
+              <!-- アイテムが入る -->
+              <div id="item-msg" class="text-2xl transition-all duration-500 opacity-0 transform scale-50">✉️</div>
+              <div id="item-padlock-alice" class="text-2xl transition-all duration-500 opacity-0 transform scale-50">🔓</div>
+            </div>
+          </div>
+
+          <!-- インターネット (ハッカー) -->
+          <div class="relative z-10 flex flex-col items-center flex-1 h-full justify-center">
+            <div class="text-slate-600 font-mono text-xs mb-8 tracking-widest">INTERNET</div>
+            
+            <!-- 飛んでいくアイテムのアニメーション用 -->
+            <div id="anim-obj" class="absolute text-4xl hidden z-50"></div>
+
+            <div class="relative mt-8 group" id="hacker-area">
+              <div class="w-16 h-16 bg-red-900/50 rounded-lg flex items-center justify-center border border-red-500/50 relative">
+                <i class="fas fa-user-ninja text-3xl text-red-500" id="hacker-icon"></i>
+              </div>
+              <div class="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-red-400 font-bold text-xs whitespace-nowrap">ハッカー（盗聴中）</div>
+              
+              <!-- ハッカーのセリフ吹き出し -->
+              <div id="hacker-speech" class="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-slate-800 text-xs text-white p-2 rounded opacity-0 transition-opacity border border-red-500 whitespace-nowrap z-20">
+                クックック...
+              </div>
+            </div>
+          </div>
+
+          <!-- ボブ (受信者) -->
+          <div class="relative z-10 flex flex-col items-center w-32">
+            <div class="w-16 h-16 bg-purple-900 rounded-full flex items-center justify-center border-2 border-purple-500 mb-2 shadow-[0_0_15px_rgba(168,85,247,0.5)]">
+              <i class="fas fa-user-tie text-3xl text-purple-300"></i>
+            </div>
+            <div class="text-purple-400 font-bold">ボブ</div>
+            <div class="text-[10px] text-slate-400">（受け取る人）</div>
+            
+            <div id="bob-inventory" class="mt-4 h-16 flex flex-col items-center justify-center gap-1 w-full bg-slate-900/50 p-2 rounded border border-slate-700">
+              <div class="text-[9px] text-slate-400 border-b border-slate-700 pb-1 w-full text-center">ボブの持ち物</div>
+              <div class="flex gap-2 mt-1">
+                <div id="item-key" class="text-2xl" title="秘密鍵（絶対に渡さない）">🔑</div>
+                <div id="item-padlock-bob" class="text-2xl" title="公開鍵（開いた南京錠）">🔓</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- コントロールボタン -->
+        <div class="mt-6 flex flex-wrap justify-center gap-4">
+          <button id="btn-step1" onclick="runPKStep1()" class="bg-cyan-700 hover:bg-cyan-600 text-white px-4 py-2 rounded-lg font-bold transition-colors border border-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.3)]">
+            1. 南京錠を投げる
+          </button>
+          <button id="btn-step2" onclick="runPKStep2()" class="bg-slate-700 text-slate-400 px-4 py-2 rounded-lg font-bold transition-colors border border-slate-600 cursor-not-allowed" disabled>
+            2. メッセージを入れて鍵をかける
+          </button>
+          <button id="btn-step3" onclick="runPKStep3()" class="bg-slate-700 text-slate-400 px-4 py-2 rounded-lg font-bold transition-colors border border-slate-600 cursor-not-allowed" disabled>
+            3. 手元の鍵で開ける
+          </button>
+          <button onclick="resetPK()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-lg font-bold transition-colors border border-slate-700 ml-auto">
+            <i class="fas fa-redo"></i> リセット
+          </button>
+        </div>
+        
+        <!-- 説明文エリア -->
+        <div id="pk-description" class="mt-6 p-4 bg-slate-900 border border-slate-700 rounded-lg text-sm text-cyan-200 font-mono min-h-[4rem] flex items-center justify-center text-center">
+          ボブは「絶対に誰にも見せない自分だけの鍵🔑」と、「誰でも閉められる開いた南京錠🔓」を持っています。まずは南京錠をアリスに投げます。
+        </div>
+
+      </div>
+    </section>
+
+    <!-- セクション3: ハッシュ関数 (戻せない暗号) -->
+    <section>
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-12 h-12 rounded-xl bg-slate-900 flex items-center justify-center border-2 border-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.4)]">
+          <i class="fas fa-blender text-2xl text-pink-400"></i>
+        </div>
+        <div>
+          <h2 class="text-2xl md:text-3xl font-bold text-white">第3の魔法：「不可逆」のミキサー</h2>
+          <span class="text-pink-500 text-sm font-mono">Hash Function (SHA-256)</span>
+        </div>
+      </div>
+      
+      <div class="bg-slate-900/80 backdrop-blur rounded-2xl border border-pink-900/50 p-6 shadow-2xl">
+        <div class="mb-8 text-slate-300 text-sm leading-relaxed">
+          <p class="mb-2"><strong>【最強の盾】</strong> これまでは「暗号化したら、いつかは解読（復号）する」ものでした。しかし、ハッシュ関数は**「絶対に元に戻せない（不可逆）」**という特徴を持つアルゴリズムです。</p>
+          <p>どんなに長い文章でも、短いパスワードでも、ミキサーにかけると**「完全に意味不明な固定の長さの文字列（ハッシュ値）」**になります。<br>
+          世界中のWebサイトは、あなたのパスワードをこのミキサーにかけてから保存しています。だから、万が一データベースがハッカーに盗まれても、元のパスワードは誰にも（管理者にも！）わからないのです。</p>
+        </div>
+
+        <div class="flex flex-col md:flex-row gap-8 items-center justify-center p-4 bg-slate-950 rounded-xl border border-slate-800">
+          
+          <!-- 入力側 -->
+          <div class="flex-1 w-full">
+            <label class="block text-xs text-pink-400 font-bold mb-2">秘密のパスワードを入力 (材料)</label>
+            <input type="text" id="hash-input" placeholder="mySecretPassword123" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-white font-mono focus:outline-none focus:border-pink-500 transition-colors">
+          </div>
+
+          <!-- ミキサー (処理) -->
+          <div class="flex flex-col items-center px-4">
+            <button onclick="runHash()" class="w-20 h-20 bg-slate-800 rounded-full flex flex-col items-center justify-center border-4 border-pink-500 hover:bg-slate-700 transition-colors shadow-[0_0_20px_rgba(236,72,153,0.5)] group relative active:scale-95">
+              <i id="mixer-icon" class="fas fa-fan text-3xl text-slate-300 group-hover:text-white transition-colors"></i>
+            </button>
+            <div class="text-xs text-slate-500 mt-2 font-bold tracking-widest">HASH()</div>
+          </div>
+
+          <!-- 出力側 -->
+          <div class="flex-1 w-full relative">
+            <label class="block text-xs text-pink-400 font-bold mb-2">ハッシュ値 (ミックスジュース)</label>
+            <div id="hash-output" class="w-full bg-black border border-pink-900 rounded-lg p-3 text-pink-500 font-mono text-[10px] sm:text-xs break-all min-h-[4rem] flex items-center justify-center shadow-inner">
+              <!-- 結果がここに出る -->
+              <span class="text-slate-700">まだミキサーにかけていません</span>
+            </div>
+            
+            <button onclick="tryReverseHash()" class="absolute -bottom-10 right-0 text-xs text-slate-500 hover:text-red-400 underline decoration-dotted transition-colors">
+              元の文字に戻す (復号)
+            </button>
+          </div>
+        </div>
+
+        <!-- 警告メッセージ -->
+        <div id="hash-warning" class="mt-12 hidden p-4 bg-red-900/40 border border-red-500 rounded-lg text-center transform transition-all duration-300 scale-95 opacity-0">
+          <i class="fas fa-skull-crossbones text-3xl text-red-500 mb-2"></i>
+          <h3 class="text-red-400 font-bold text-lg mb-1">エラー！元には戻せません！</h3>
+          <p class="text-sm text-slate-300">
+            ミックスジュースから元の「りんご」や「バナナ」を分離できないのと同じで、<br>
+            ハッシュ関数は数学的に<strong>「逆算が不可能」</strong>なアルゴリズムで作られています。
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- JavaScript ロジック -->
+  <script>
+    const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+    /* =========================================
+       セクション1: シーザー暗号
+    ========================================= */
+    function updateCaesar() {
+      const input = document.getElementById('caesar-input').value.toUpperCase();
+      const shift = parseInt(document.getElementById('caesar-shift').value);
+      
+      // UI更新
+      document.getElementById('caesar-shift-val').innerText = shift;
+      document.getElementById('caesar-decrypt-val').innerText = shift;
+      document.getElementById('caesar-decrypt-slider').value = shift;
+
+      // アルファベットのみシフトするロジック
+      let encrypted = '';
+      for (let i = 0; i < input.length; i++) {
+        let charCode = input.charCodeAt(i);
+        if (charCode >= 65 && charCode <= 90) { // A-Z
+          encrypted += String.fromCharCode(((charCode - 65 + shift) % 26) + 65);
+        } else {
+          encrypted += input[i]; // スペースや記号はそのまま
+        }
+      }
+
+      document.getElementById('caesar-output').innerText = encrypted;
+      
+      // 受信側は同じように表示（擬似的に通信しているように見せる）
+      // 実際は encrypted から -shift して復号するが、UIの都合上 input をそのまま出す
+      if(input === "") {
+         document.getElementById('caesar-decrypted').innerText = " ";
+      } else {
+         // アニメーション効果（タイピング風）をつけるために少し遅延させるのもありだが、リアルタイム性を優先
+         document.getElementById('caesar-decrypted').innerText = input;
+      }
+    }
+
+    /* =========================================
+       セクション2: 公開鍵暗号 (アニメーション)
+    ========================================= */
+    let pkStep = 0;
+    const animObj = document.getElementById('anim-obj');
+    const hackerIcon = document.getElementById('hacker-icon');
+    const hackerSpeech = document.getElementById('hacker-speech');
+    const desc = document.getElementById('pk-description');
+
+    function hackerReact(text, isLaugh = false) {
+      hackerSpeech.innerText = text;
+      hackerSpeech.style.opacity = '1';
+      if(isLaugh) hackerIcon.classList.add('anim-hacker');
+      
+      setTimeout(() => {
+        hackerSpeech.style.opacity = '0';
+        hackerIcon.classList.remove('anim-hacker');
+      }, 2500);
+    }
+
+    function setBtnState(id, isActive, textClass = 'text-white', bgClass = 'bg-cyan-700', hoverClass = 'hover:bg-cyan-600', borderClass = 'border-cyan-500') {
+      const btn = document.getElementById(id);
+      if (isActive) {
+        btn.disabled = false;
+        btn.className = `${bgClass} ${hoverClass} ${textClass} px-4 py-2 rounded-lg font-bold transition-colors border ${borderClass} shadow-[0_0_10px_rgba(6,182,212,0.3)]`;
+      } else {
+        btn.disabled = true;
+        btn.className = `bg-slate-700 text-slate-400 px-4 py-2 rounded-lg font-bold transition-colors border border-slate-600 cursor-not-allowed`;
+      }
+    }
+
+    async function runPKStep1() {
+      if (pkStep !== 0) return;
+      pkStep = 1;
+      setBtnState('btn-step1', false);
+      
+      desc.innerHTML = "ボブが「公開鍵🔓（開いた南京錠）」をインターネット経由でアリスに投げます。<br>ハッカーはこれを見ても「ふーん、開いた鍵か」としか思いません。";
+
+      // ボブからアリスへ南京錠が飛ぶ
+      document.getElementById('item-padlock-bob').style.opacity = '0';
+      
+      animObj.innerText = '🔓';
+      animObj.className = 'absolute text-4xl z-50 anim-fly-rl'; // Right to Left
+      animObj.style.display = 'block';
+
+      setTimeout(() => { hackerReact("南京錠だけ盗んでも意味ねぇな"); }, 1000);
+
+      await sleep(2000);
+      
+      animObj.style.display = 'none';
+      const padlockAlice = document.getElementById('item-padlock-alice');
+      padlockAlice.style.opacity = '1';
+      padlockAlice.style.transform = 'scale(1)';
+      
+      setBtnState('btn-step2', true, 'text-white', 'bg-blue-600', 'hover:bg-blue-500', 'border-blue-500');
+    }
+
+    async function runPKStep2() {
+      if (pkStep !== 1) return;
+      pkStep = 2;
+      setBtnState('btn-step2', false);
+
+      desc.innerHTML = "アリスは秘密のメッセージを箱に入れ、もらった「公開鍵🔓」でガチャンとロック🔒しました。<br>これをボブに送り返します。";
+
+      // メッセージ出現とロック
+      const msg = document.getElementById('item-msg');
+      const padlockAlice = document.getElementById('item-padlock-alice');
+      
+      msg.style.opacity = '1';
+      msg.style.transform = 'scale(1)';
+      await sleep(1000);
+      
+      // 合体してロックされた箱になる
+      msg.innerText = '📦🔒';
+      padlockAlice.style.opacity = '0';
+      await sleep(1000);
+
+      // アリスからボブへ飛ぶ
+      msg.style.opacity = '0';
+      animObj.innerText = '📦🔒';
+      animObj.className = 'absolute text-4xl z-50 anim-fly-lr'; // Left to Right
+      animObj.style.display = 'block';
+
+      setTimeout(() => { hackerReact("箱は盗めたぞ！…って鍵がかかってて開けられねぇ！", true); }, 1000);
+
+      await sleep(2000);
+
+      animObj.style.display = 'none';
+      const bobInventory = document.getElementById('bob-inventory');
+      // ボブの持ち物に箱を追加
+      const boxDiv = document.createElement('div');
+      boxDiv.id = 'bob-box';
+      boxDiv.innerText = '📦🔒';
+      boxDiv.className = 'text-2xl mt-1 fade-in';
+      bobInventory.appendChild(boxDiv);
+
+      desc.innerHTML = "暗号化された箱がボブに届きました！<br>途中でハッカーが箱を盗み見ても、鍵がないので絶対に開けられません。";
+      setBtnState('btn-step3', true, 'text-white', 'bg-purple-600', 'hover:bg-purple-500', 'border-purple-500');
+    }
+
+    async function runPKStep3() {
+      if (pkStep !== 2) return;
+      pkStep = 3;
+      setBtnState('btn-step3', false);
+
+      desc.innerHTML = "ボブは自分だけが持っている「秘密鍵🔑」を使います。<br>ガチャン！無事にメッセージを取り出せました！これが現代の暗号の仕組みです。";
+
+      const key = document.getElementById('item-key');
+      const box = document.getElementById('bob-box');
+
+      // 鍵が動くアニメーション
+      key.style.transform = 'translateY(10px) rotate(45deg)';
+      await sleep(500);
+      key.style.transform = 'translateY(0) rotate(0)';
+      
+      // 箱が開く
+      box.innerText = '📦🔓';
+      await sleep(500);
+      box.innerHTML = '✉️ <span class="text-xs text-green-400 font-bold ml-1">GET!</span>';
+    }
+
+    function resetPK() {
+      pkStep = 0;
+      
+      // UIリセット
+      document.getElementById('item-padlock-bob').style.opacity = '1';
+      
+      const aliceMsg = document.getElementById('item-msg');
+      aliceMsg.innerText = '✉️';
+      aliceMsg.style.opacity = '0';
+      aliceMsg.style.transform = 'scale(0.5)';
+      
+      const padlockAlice = document.getElementById('item-padlock-alice');
+      padlockAlice.style.opacity = '0';
+      padlockAlice.style.transform = 'scale(0.5)';
+      
+      const bobBox = document.getElementById('bob-box');
+      if (bobBox) bobBox.remove();
+      
+      animObj.style.display = 'none';
+      animObj.className = 'absolute text-4xl hidden z-50';
+
+      setBtnState('btn-step1', true);
+      setBtnState('btn-step2', false);
+      setBtnState('btn-step3', false);
+      
+      desc.innerHTML = "ボブは「絶対に誰にも見せない自分だけの鍵🔑」と、「誰でも閉められる開いた南京錠🔓」を持っています。まずは南京錠をアリスに投げます。";
+    }
+
+    /* =========================================
+       セクション3: ハッシュ関数
+    ========================================= */
+    // 本物のSHA-256ライクな見栄えにするための疑似ハッシュ関数
+    async function simpleHash(text) {
+      if (!text) return "入力がありません";
+      
+      // 演出としてWeb Crypto APIを使用して本物のSHA-256を生成
+      const msgBuffer = new TextEncoder().encode(text);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      return hashHex;
+    }
+
+    async function runHash() {
+      const input = document.getElementById('hash-input').value;
+      const output = document.getElementById('hash-output');
+      const icon = document.getElementById('mixer-icon');
+      const warning = document.getElementById('hash-warning');
+
+      if (!input) {
+        output.innerHTML = '<span class="text-slate-500">材料（テキスト）を入れてください</span>';
+        return;
+      }
+
+      // エラーを隠す
+      warning.classList.remove('scale-100', 'opacity-100');
+      warning.classList.add('scale-95', 'opacity-0', 'hidden');
+
+      // ミキサー回転アニメーション
+      icon.classList.remove('mixer-active');
+      void icon.offsetWidth; // リフロー強制
+      icon.classList.add('mixer-active');
+      
+      output.innerHTML = '<span class="text-slate-500 animate-pulse">ミキサーで粉砕中...</span>';
+
+      await sleep(1000); // アニメーション時間待機
+
+      // ハッシュ値の生成と表示
+      const hex = await simpleHash(input);
+      
+      // タイプライター風エフェクトのために少しDOMを工夫
+      output.innerHTML = `<div class="typewriter text-pink-400 drop-shadow-[0_0_8px_rgba(236,72,153,0.8)]">${hex}</div>`;
+    }
+
+    function tryReverseHash() {
+      const warning = document.getElementById('hash-warning');
+      warning.classList.remove('hidden');
+      
+      // 少し遅延させてからアニメーションクラスを付与
+      setTimeout(() => {
+        warning.classList.remove('scale-95', 'opacity-0');
+        warning.classList.add('scale-100', 'opacity-100');
+      }, 10);
+    }
+
+    // 初期化処理
+    window.onload = () => {
+      updateCaesar();
+    };
+
+  </script>
+</body>
+</html>
+
+```
