@@ -1,0 +1,578 @@
+```html
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>プロのアルゴリズム活用 直感図解 第2弾</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    /* アニメーション */
+    @keyframes popIn {
+      0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    @keyframes slideUp {
+      0% { transform: translateY(20px); opacity: 0; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 15px rgba(236, 72, 153, 0.4); }
+      50% { box-shadow: 0 0 25px rgba(236, 72, 153, 0.8); }
+    }
+
+    /* ソート用バーのスタイル */
+    .bar {
+      transition: height 0.1s ease, background-color 0.1s;
+      border-radius: 4px 4px 0 0;
+    }
+    .bar-default { background-color: #3b82f6; } /* 青 */
+    .bar-compare { background-color: #fef08a; transform: scale(1.05); z-index: 10; } /* 黄色 */
+    .bar-swap { background-color: #ef4444; } /* 赤 */
+    .bar-pivot { background-color: #a855f7; } /* 紫 */
+    .bar-sorted { background-color: #10b981; } /* 緑 */
+
+    /* レコメンド用アイコン */
+    .item-btn { transition: all 0.2s; }
+    .item-liked { background-color: #ec4899; color: white; border-color: #be185d; transform: scale(1.05); }
+    .item-unliked { background-color: #1e293b; color: #94a3b8; border-color: #334155; }
+    
+    .recommend-card { animation: slideUp 0.4s ease-out forwards; }
+    .sync-bar { transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+
+    /* 全体背景 */
+    body {
+      background-color: #0f172a;
+      background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 70%);
+      color: #e2e8f0;
+    }
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #1e293b; }
+    ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+  </style>
+</head>
+<body class="font-sans min-h-screen pb-16">
+
+  <header class="bg-slate-900 border-b border-slate-800 py-8 px-4 text-center sticky top-0 z-50 shadow-2xl">
+    <div class="max-w-4xl mx-auto">
+      <div class="inline-block bg-pink-900/50 text-pink-300 px-3 py-1 rounded-full text-xs font-bold mb-3 border border-pink-700/50">
+        <i class="fas fa-bolt mr-1"></i> もっと知りたい！アルゴリズムの世界 第2弾
+      </div>
+      <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight mb-2 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-orange-400">
+        魔法の裏側を暴け！
+      </h1>
+      <p class="text-slate-400 text-sm md:text-base">「並び替え」と「あなたへのおすすめ」はどう動いている？</p>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-10 space-y-20">
+
+    <!-- ユースケース3: ソート（並び替え） -->
+    <section>
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
+          <i class="fas fa-sort-amount-up-alt text-2xl text-white"></i>
+        </div>
+        <div>
+          <h2 class="text-2xl md:text-3xl font-bold text-white">ユースケース 3：「並び替え（ソート）」</h2>
+          <span class="text-slate-400 text-sm">Sorting Algorithm</span>
+        </div>
+      </div>
+      
+      <div class="bg-slate-800/50 backdrop-blur rounded-2xl border border-slate-700 p-6 shadow-xl">
+        <div class="mb-6 text-slate-300 text-sm leading-relaxed">
+          <p class="mb-2"><strong>【プロの現場】</strong> Amazonで「価格が安い順」にしたり、ゲームで「スコアが高い順」のランキングを作る時に使います。前回の「高速検索（バイナリサーチ）」をするための事前準備としても必須です。</p>
+          <p>バラバラな高さの棒を「低い順」に並び替えます。<br>
+          素人が思いつく**「バブルソート」**と、天才が考えた**「クイックソート」**。データが多くなった時の**「計算回数（手数）」の圧倒的な差**を見てください！</p>
+        </div>
+
+        <div class="flex gap-4 mb-6 justify-center">
+          <button onclick="shuffleArray()" class="bg-slate-700 hover:bg-slate-600 text-white px-5 py-2 rounded-lg text-sm font-bold transition-all shadow border border-slate-600 active:scale-95">
+            <i class="fas fa-random mr-1"></i> バラバラにする
+          </button>
+        </div>
+
+        <div class="flex flex-col lg:flex-row gap-8">
+          <!-- バブルソート -->
+          <div class="flex-1 bg-slate-900 rounded-xl p-4 border border-slate-700 relative">
+            <h3 class="text-lg font-bold text-slate-300 mb-2 flex justify-between items-center border-b border-slate-800 pb-2">
+              <span><i class="fas fa-turtle text-emerald-500 mr-2"></i> バブルソート (素人)</span>
+              <span class="text-xs bg-slate-800 px-2 py-1 rounded text-slate-400">遅い</span>
+            </h3>
+            <p class="text-xs text-slate-500 mb-4 h-12">「隣同士を比べて、右が小さければ入れ替える」をひたすら繰り返す。泡(バブル)が浮かぶように大きい値が右へ移動する。</p>
+            
+            <div class="flex justify-between items-end mb-2">
+              <button onclick="runBubbleSort()" id="btn-bubble" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded text-sm font-bold transition-all shadow-[0_0_10px_rgba(16,185,129,0.3)] active:scale-95">
+                スタート
+              </button>
+              <div class="text-right">
+                <div class="text-[10px] text-slate-500">計算（比較）回数</div>
+                <div class="text-2xl font-mono font-bold text-emerald-400" id="bubble-count">0</div>
+              </div>
+            </div>
+
+            <!-- グラフエリア -->
+            <div class="h-48 w-full bg-slate-950 rounded border border-slate-800 flex items-end px-1 gap-[2px] pt-4" id="bubble-container">
+              <!-- JSでバーを生成 -->
+            </div>
+          </div>
+
+          <!-- クイックソート -->
+          <div class="flex-1 bg-slate-900 rounded-xl p-4 border border-indigo-900 relative shadow-[0_0_20px_rgba(79,70,229,0.15)]">
+            <div class="absolute -top-3 -right-3 bg-indigo-600 text-white text-[10px] font-bold px-3 py-1 rounded shadow-lg transform rotate-12 border border-indigo-400">プロの技！</div>
+            <h3 class="text-lg font-bold text-indigo-300 mb-2 flex justify-between items-center border-b border-slate-800 pb-2">
+              <span><i class="fas fa-fighter-jet text-indigo-400 mr-2"></i> クイックソート (天才)</span>
+              <span class="text-xs bg-indigo-900/50 px-2 py-1 rounded text-indigo-300">超速い</span>
+            </h3>
+            <p class="text-xs text-indigo-200/70 mb-4 h-12">適当な基準(ピボット<span class="inline-block w-2 h-2 bg-purple-500 rounded-full mx-1"></span>)を決め、「それより小さい組」と「大きい組」に真っ二つに分けるのを繰り返す。</p>
+            
+            <div class="flex justify-between items-end mb-2">
+              <button onclick="runQuickSort()" id="btn-quick" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded text-sm font-bold transition-all shadow-[0_0_15px_rgba(79,70,229,0.5)] active:scale-95">
+                スタート
+              </button>
+              <div class="text-right">
+                <div class="text-[10px] text-slate-500">計算（比較）回数</div>
+                <div class="text-2xl font-mono font-bold text-indigo-400" id="quick-count">0</div>
+              </div>
+            </div>
+
+            <!-- グラフエリア -->
+            <div class="h-48 w-full bg-slate-950 rounded border border-slate-800 flex items-end px-1 gap-[2px] pt-4" id="quick-container">
+              <!-- JSでバーを生成 -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ユースケース4: レコメンド（おすすめ） -->
+    <section>
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-pink-500 to-orange-500 flex items-center justify-center shadow-lg shadow-pink-500/30">
+          <i class="fas fa-magic text-2xl text-white"></i>
+        </div>
+        <div>
+          <h2 class="text-2xl md:text-3xl font-bold text-white">ユースケース 4：「おすすめ（レコメンド）」</h2>
+          <span class="text-slate-400 text-sm">Collaborative Filtering</span>
+        </div>
+      </div>
+      
+      <div class="bg-slate-800/50 backdrop-blur rounded-2xl border border-slate-700 p-6 shadow-xl">
+        <div class="mb-8 text-slate-300 text-sm leading-relaxed">
+          <p class="mb-2"><strong>【プロの現場】</strong> YouTubeの「次に見る動画」や、Amazonの「この商品を買った人はこんな商品も…」というアレです。</p>
+          <p>今回は**「協調フィルタリング」**という手法を体験します。アルゴリズムは動画の中身を知りません。**「あなたと『いいね』のパターンが似ている人（シンクロ率が高い人）を探し、その人が見ていて、あなたがまだ見ていないモノをおすすめする」**という賢い人間関係の計算を使っています。</p>
+        </div>
+
+        <div class="flex flex-col lg:flex-row gap-8">
+          
+          <!-- 左：あなたの操作パネル -->
+          <div class="w-full lg:w-1/2">
+            <h3 class="text-lg font-bold text-pink-400 mb-4 flex items-center">
+              <i class="fas fa-user-circle mr-2 text-2xl"></i> あなたの好み（いいねしてね！）
+            </h3>
+            
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8" id="user-likes-container">
+              <!-- JSで生成 -->
+            </div>
+
+            <div class="bg-slate-900 rounded-xl p-4 border border-slate-700">
+              <h4 class="text-sm font-bold text-slate-400 mb-3">裏側で計算中：他の人とのシンクロ率</h4>
+              <div id="sync-rates" class="space-y-4">
+                <!-- JSで生成 -->
+              </div>
+            </div>
+          </div>
+
+          <!-- 右：システムからのおすすめ -->
+          <div class="w-full lg:w-1/2 flex flex-col justify-center">
+            <div class="bg-gradient-to-b from-slate-800 to-slate-900 rounded-2xl p-8 border-2 border-slate-700 shadow-2xl relative overflow-hidden text-center min-h-[300px] flex flex-col items-center justify-center" id="recommend-area">
+              
+              <!-- 背景の装飾 -->
+              <div class="absolute -top-10 -right-10 text-9xl text-slate-700 opacity-20"><i class="fas fa-robot"></i></div>
+              
+              <div id="recommend-waiting">
+                <i class="fas fa-search text-5xl text-slate-600 mb-4 animate-pulse"></i>
+                <h3 class="text-xl font-bold text-slate-400 mb-2">おすすめを計算中...</h3>
+                <p class="text-sm text-slate-500">左のボタンをいくつか「いいね」して、<br>あなたの好みを教えてください。</p>
+              </div>
+
+              <div id="recommend-result" class="hidden w-full">
+                <div class="inline-block bg-pink-500 text-white text-xs font-bold px-3 py-1 rounded-full mb-4 animate-[pulse-glow_2s_infinite]">
+                  <i class="fas fa-star mr-1"></i> アルゴリズムからの推薦！
+                </div>
+                <h3 class="text-lg text-slate-300 mb-2">あなたと似ている<span id="rec-user-name" class="font-bold text-pink-400 mx-1">〇〇さん</span>が好きな</h3>
+                <div id="rec-item-icon" class="text-6xl mb-4 mt-2">🎮</div>
+                <h2 id="rec-item-name" class="text-3xl font-extrabold text-white mb-2">アクションゲーム</h2>
+                <p class="text-sm text-slate-400 mt-4">シンクロ率 <span id="rec-sync-score" class="font-bold text-pink-400">80%</span> のデータに基づく予測です</p>
+                <button onclick="acceptRecommend()" class="mt-6 bg-slate-700 hover:bg-pink-600 text-white px-6 py-2 rounded-full font-bold transition-all">
+                  見てみる！
+                </button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+    /* =================================================================
+       ユースケース3: ソートアルゴリズム
+       ================================================================= */
+    const NUM_BARS = 30; // 棒の数
+    let array = [];
+    let isSorting = false;
+
+    // 配列の初期化と描画
+    function initArrays() {
+      array = Array.from({length: NUM_BARS}, () => Math.floor(Math.random() * 90) + 10);
+      drawBars('bubble-container', array);
+      drawBars('quick-container', array);
+      document.getElementById('bubble-count').innerText = "0";
+      document.getElementById('quick-count').innerText = "0";
+    }
+
+    function shuffleArray() {
+      if (isSorting) return;
+      initArrays();
+    }
+
+    function drawBars(containerId, arr, activeIndices = [], swapIndices = [], pivotIndex = -1, sortedIndices = []) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = '';
+      
+      const maxVal = Math.max(...arr, 100);
+      
+      arr.forEach((val, idx) => {
+        const bar = document.createElement('div');
+        // 高さをパーセントで指定
+        const heightPct = (val / maxVal) * 100;
+        bar.style.height = `${heightPct}%`;
+        
+        // Tailwindのクラスでベーススタイル設定
+        bar.className = 'bar flex-1 ';
+        
+        // 状態に応じて色(クラス)を変更
+        if (sortedIndices.includes(idx)) {
+          bar.classList.add('bar-sorted');
+        } else if (pivotIndex === idx) {
+          bar.classList.add('bar-pivot');
+        } else if (swapIndices.includes(idx)) {
+          bar.classList.add('bar-swap');
+        } else if (activeIndices.includes(idx)) {
+          bar.classList.add('bar-compare');
+        } else {
+          bar.classList.add('bar-default');
+        }
+        
+        container.appendChild(bar);
+      });
+    }
+
+    // バブルソート (アニメーション付き)
+    async function runBubbleSort() {
+      if (isSorting) return;
+      isSorting = true;
+      document.getElementById('btn-bubble').disabled = true;
+      document.getElementById('btn-quick').disabled = true;
+
+      let arr = [...array];
+      let count = 0;
+      const countEl = document.getElementById('bubble-count');
+      let sortedIndices = [];
+
+      for (let i = 0; i < arr.length; i++) {
+        for (let j = 0; j < arr.length - i - 1; j++) {
+          count++;
+          countEl.innerText = count;
+          
+          // 比較中をハイライト
+          drawBars('bubble-container', arr, [j, j+1], [], -1, sortedIndices);
+          // await sleep(10); // スピード調整 (遅すぎるので極力短く)
+          
+          if (arr[j] > arr[j + 1]) {
+            // 入れ替え
+            let temp = arr[j];
+            arr[j] = arr[j + 1];
+            arr[j + 1] = temp;
+            
+            drawBars('bubble-container', arr, [], [j, j+1], -1, sortedIndices);
+            await sleep(10); // スワップした時だけ少し見せる
+          }
+        }
+        // 一番右が確定
+        sortedIndices.push(arr.length - 1 - i);
+        drawBars('bubble-container', arr, [], [], -1, sortedIndices);
+      }
+
+      document.getElementById('btn-bubble').disabled = false;
+      document.getElementById('btn-quick').disabled = false;
+      isSorting = false;
+    }
+
+    // クイックソート (アニメーション付き)
+    async function runQuickSort() {
+      if (isSorting) return;
+      isSorting = true;
+      document.getElementById('btn-bubble').disabled = true;
+      document.getElementById('btn-quick').disabled = true;
+
+      let arr = [...array];
+      let count = 0;
+      const countEl = document.getElementById('quick-count');
+      let sortedIndices = [];
+
+      async function partition(low, high) {
+        let pivot = arr[high]; // 一番右をピボットにする
+        let i = low - 1;
+
+        for (let j = low; j < high; j++) {
+          count++;
+          countEl.innerText = count;
+          
+          drawBars('quick-container', arr, [j], [], high, sortedIndices);
+          await sleep(20);
+
+          if (arr[j] < pivot) {
+            i++;
+            let temp = arr[i];
+            arr[i] = arr[j];
+            arr[j] = temp;
+            drawBars('quick-container', arr, [], [i, j], high, sortedIndices);
+            await sleep(20);
+          }
+        }
+        let temp = arr[i + 1];
+        arr[i + 1] = arr[high];
+        arr[high] = temp;
+        
+        drawBars('quick-container', arr, [], [i + 1, high], -1, sortedIndices);
+        await sleep(30);
+        
+        return i + 1;
+      }
+
+      async function quickSortLogic(low, high) {
+        if (low < high) {
+          let pi = await partition(low, high);
+          // ピボット位置は確定
+          sortedIndices.push(pi);
+          await quickSortLogic(low, pi - 1);
+          await quickSortLogic(pi + 1, high);
+        } else if (low === high) {
+           sortedIndices.push(low);
+        }
+      }
+
+      await quickSortLogic(0, arr.length - 1);
+      
+      // 全て完了
+      drawBars('quick-container', arr, [], [], -1, sortedIndices);
+
+      document.getElementById('btn-bubble').disabled = false;
+      document.getElementById('btn-quick').disabled = false;
+      isSorting = false;
+    }
+
+
+    /* =================================================================
+       ユースケース4: レコメンドアルゴリズム
+       ================================================================= */
+    
+    // アイテム（動画ジャンルなど）の定義
+    const items = [
+      { id: 'anime', icon: '📺', name: 'アニメ' },
+      { id: 'game', icon: '🎮', name: 'ゲーム実況' },
+      { id: 'music', icon: '🎵', name: '音楽MV' },
+      { id: 'study', icon: '📚', name: '勉強・教育' },
+      { id: 'food', icon: '🍔', name: '大食い動画' },
+      { id: 'pet', icon: '🐱', name: '動物・ペット' },
+    ];
+
+    // 他のユーザーのデータ（あらかじめ「いいね」しているもの）
+    const otherUsers = [
+      { name: 'Ａさん', likes: ['anime', 'game', 'music'], avatar: 'fas fa-user-ninja text-blue-400' },
+      { name: 'Ｂさん', likes: ['study', 'food', 'music'], avatar: 'fas fa-user-graduate text-emerald-400' },
+      { name: 'Ｃさん', likes: ['pet', 'anime', 'food'], avatar: 'fas fa-user-astronaut text-purple-400' }
+    ];
+
+    // あなたのいいね状態
+    let myLikes = new Set();
+
+    // UI初期化
+    function initRecommendUI() {
+      const container = document.getElementById('user-likes-container');
+      
+      items.forEach(item => {
+        const btn = document.createElement('button');
+        btn.className = 'item-btn item-unliked border p-3 rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer shadow-sm';
+        btn.innerHTML = `
+          <div class="text-3xl">${item.icon}</div>
+          <div class="text-xs font-bold">${item.name}</div>
+          <div class="text-[10px] opacity-70"><i class="fas fa-heart"></i> いいね</div>
+        `;
+        btn.onclick = () => toggleLike(item.id, btn);
+        container.appendChild(btn);
+      });
+
+      updateSyncUI();
+    }
+
+    // いいねの切り替え
+    function toggleLike(itemId, btn) {
+      if (myLikes.has(itemId)) {
+        myLikes.delete(itemId);
+        btn.classList.replace('item-liked', 'item-unliked');
+      } else {
+        myLikes.add(itemId);
+        btn.classList.replace('item-unliked', 'item-liked');
+        
+        // クリックエフェクト
+        const heart = document.createElement('div');
+        heart.innerHTML = '<i class="fas fa-heart text-pink-500"></i>';
+        heart.className = 'absolute pointer-events-none transition-all duration-500 z-50 text-2xl';
+        heart.style.left = `${btn.getBoundingClientRect().left + btn.offsetWidth/2}px`;
+        heart.style.top = `${btn.getBoundingClientRect().top + btn.offsetHeight/2}px`;
+        document.body.appendChild(heart);
+        
+        requestAnimationFrame(() => {
+          heart.style.transform = 'translateY(-50px) scale(1.5)';
+          heart.style.opacity = '0';
+        });
+        setTimeout(() => heart.remove(), 500);
+      }
+
+      calculateRecommendation();
+    }
+
+    // シンクロ率（Jaccard係数的な簡易計算）
+    function calculateRecommendation() {
+      let maxSync = 0;
+      let bestUser = null;
+      let syncData = [];
+
+      // 各ユーザーとの類似度を計算
+      otherUsers.forEach(user => {
+        let commonCount = 0;
+        user.likes.forEach(like => {
+          if (myLikes.has(like)) commonCount++;
+        });
+
+        // 簡易的なシンクロ率計算（共通数 / ユーザーの好きな数ベース）
+        // ※実際はもっと複雑な行列計算（コサイン類似度など）を行います
+        let score = 0;
+        if (myLikes.size > 0) {
+           // どちらかが「いいね」している総数
+           let unionSet = new Set([...myLikes, ...user.likes]);
+           score = Math.floor((commonCount / unionSet.size) * 100);
+        }
+
+        syncData.push({ user, score });
+
+        if (score > maxSync) {
+          maxSync = score;
+          bestUser = user;
+        }
+      });
+
+      // UIの更新
+      updateSyncUI(syncData);
+
+      // おすすめアイテムの決定
+      const waitingArea = document.getElementById('recommend-waiting');
+      const resultArea = document.getElementById('recommend-result');
+
+      if (maxSync > 0 && bestUser) {
+        // ベストユーザーが好きで、自分がまだいいねしていないアイテムを探す
+        let recommendedItem = null;
+        for (let itemId of bestUser.likes) {
+          if (!myLikes.has(itemId)) {
+            recommendedItem = items.find(i => i.id === itemId);
+            break;
+          }
+        }
+
+        if (recommendedItem) {
+          // おすすめ表示
+          waitingArea.classList.add('hidden');
+          resultArea.classList.remove('hidden');
+          
+          // 一度非表示にしてアニメーションを再トリガー
+          resultArea.style.animation = 'none';
+          resultArea.offsetHeight; // リフロー
+          resultArea.style.animation = 'slideUp 0.4s ease-out forwards';
+
+          document.getElementById('rec-user-name').innerText = bestUser.name;
+          document.getElementById('rec-item-icon').innerText = recommendedItem.icon;
+          document.getElementById('rec-item-name').innerText = recommendedItem.name;
+          document.getElementById('rec-sync-score').innerText = `${maxSync}%`;
+        } else {
+          // 新しいおすすめがない場合
+          showWaiting("おすすめ動画が見つかりません！<br>他のジャンルも「いいね」してみてください。");
+        }
+      } else {
+        showWaiting("おすすめを計算中...<br>左のボタンをいくつか「いいね」して、<br>あなたの好みを教えてください。");
+      }
+    }
+
+    function showWaiting(msg) {
+      document.getElementById('recommend-waiting').classList.remove('hidden');
+      document.getElementById('recommend-result').classList.add('hidden');
+      document.getElementById('recommend-waiting').querySelector('p').innerHTML = msg;
+    }
+
+    function updateSyncUI(syncData = null) {
+      const container = document.getElementById('sync-rates');
+      container.innerHTML = '';
+
+      const dataToRender = syncData || otherUsers.map(u => ({ user: u, score: 0 }));
+
+      dataToRender.forEach(data => {
+        // 色分け
+        let colorClass = 'bg-slate-600';
+        if (data.score > 60) colorClass = 'bg-pink-500 shadow-[0_0_10px_rgba(236,72,153,0.5)]';
+        else if (data.score > 30) colorClass = 'bg-indigo-400';
+
+        const div = document.createElement('div');
+        div.innerHTML = `
+          <div class="flex justify-between text-xs text-slate-400 mb-1">
+            <span><i class="${data.user.avatar} mr-1"></i> ${data.user.name}</span>
+            <span class="font-mono text-white">${data.score}%</span>
+          </div>
+          <div class="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
+            <div class="sync-bar h-full ${colorClass} rounded-full" style="width: ${data.score}%"></div>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function acceptRecommend() {
+      const btn = event.currentTarget;
+      btn.innerHTML = '<i class="fas fa-check"></i> 再生中...';
+      btn.classList.replace('bg-slate-700', 'bg-emerald-600');
+      btn.classList.replace('hover:bg-pink-600', 'hover:bg-emerald-500');
+      
+      setTimeout(() => {
+        btn.innerHTML = '見てみる！';
+        btn.classList.replace('bg-emerald-600', 'bg-slate-700');
+        btn.classList.replace('hover:bg-emerald-500', 'hover:bg-pink-600');
+      }, 2000);
+    }
+
+    // 初期化
+    window.onload = () => {
+      initArrays();
+      initRecommendUI();
+    };
+  </script>
+</body>
+</html>
+
+```
