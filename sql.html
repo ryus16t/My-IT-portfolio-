@@ -1,0 +1,509 @@
+```html
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>プロのアルゴリズム活用 直感図解</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    /* アニメーションとカスタムスタイル */
+    @keyframes popIn {
+      0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .fade-in { animation: popIn 0.3s ease-out forwards; }
+    
+    /* 探索のハイライト用 */
+    .search-cell { transition: all 0.2s; }
+    .search-checking { background-color: #fef08a !important; transform: scale(1.1); box-shadow: 0 0 10px #eab308; z-index: 10; border-color: #eab308; }
+    .search-eliminated { background-color: #334155 !important; opacity: 0.3; }
+    .search-found { background-color: #22c55e !important; color: white !important; transform: scale(1.2); box-shadow: 0 0 15px #22c55e; z-index: 20; border-color: #16a34a; font-weight: bold; }
+
+    /* 迷路用 */
+    .maze-cell { transition: background-color 0.1s ease; }
+    .maze-wall { background-color: #475569; }
+    .maze-start { background-color: #3b82f6; color: white; }
+    .maze-goal { background-color: #ef4444; color: white; }
+    .maze-visited { background-color: #93c5fd; animation: popIn 0.2s ease-out; }
+    .maze-path { background-color: #fbbf24 !important; box-shadow: 0 0 10px #fbbf24; z-index: 10; position: relative; animation: popIn 0.2s ease-out; }
+    
+    /* 背景パターン */
+    body {
+      background-color: #0f172a;
+      background-image: 
+        linear-gradient(rgba(30, 41, 59, 0.5) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(30, 41, 59, 0.5) 1px, transparent 1px);
+      background-size: 30px 30px;
+      color: #e2e8f0;
+    }
+    
+    /* スクロールバー */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #1e293b; }
+    ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+  </style>
+</head>
+<body class="font-sans min-h-screen pb-12">
+
+  <header class="bg-slate-900 border-b border-slate-700 py-8 px-4 text-center sticky top-0 z-50 shadow-lg">
+    <div class="max-w-4xl mx-auto">
+      <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight mb-2 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
+        プロはどうアルゴリズムを使う？
+      </h1>
+      <p class="text-slate-400">目的によって「道具（計算手順）」を持ち替える凄さを体験しよう！</p>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-8 space-y-16">
+
+    <!-- ユースケース1: 検索（サーチ） -->
+    <section class="bg-slate-800 rounded-2xl border border-slate-700 shadow-2xl overflow-hidden">
+      <div class="bg-gradient-to-r from-blue-900 to-slate-800 p-4 border-b border-slate-700 flex items-center justify-between">
+        <h2 class="text-2xl font-bold text-white"><i class="fas fa-search text-blue-400 mr-2"></i> ユースケース 1：「データを探す」アルゴリズム</h2>
+        <span class="bg-blue-800 text-blue-200 text-xs px-2 py-1 rounded font-mono border border-blue-600">Search Algorithm</span>
+      </div>
+      
+      <div class="p-6">
+        <div class="mb-6 flex flex-col md:flex-row gap-4 items-start">
+          <div class="flex-1 text-slate-300 text-sm leading-relaxed">
+            <p class="mb-2"><strong>【プロの現場】</strong> ユーザーが入力したIDや名前を、数百万人のデータベースから探す時に使います。</p>
+            <p>1から100まで並んだ箱の中から、指定した数字（例：<span id="target-number-display" class="font-bold text-yellow-400">73</span>）を探します。<br>
+            「端から順番に見る（素人）」と「真ん中から絞り込む（プロ）」で、探すスピード（手数）がどう変わるか見てみましょう。</p>
+          </div>
+          <div class="bg-slate-900 p-3 rounded-lg border border-slate-700 text-center w-full md:w-48">
+            <div class="text-xs text-slate-500 mb-1">探すターゲット数字</div>
+            <div class="text-3xl font-bold text-yellow-400 font-mono" id="target-number">73</div>
+            <button onclick="randomizeTarget()" class="mt-2 text-xs bg-slate-700 hover:bg-slate-600 px-2 py-1 rounded text-white w-full transition-colors">ターゲット変更</button>
+          </div>
+        </div>
+
+        <div class="flex flex-col lg:flex-row gap-6">
+          <!-- 左: リニアサーチ -->
+          <div class="flex-1 bg-slate-900 rounded-xl p-4 border border-slate-700 relative">
+            <h3 class="text-lg font-bold text-slate-200 mb-2 border-b border-slate-700 pb-2">
+              <i class="fas fa-walking text-slate-400 mr-2"></i> 線形探索 (リニアサーチ)
+            </h3>
+            <p class="text-xs text-slate-400 mb-4 h-12">端から1つずつ順番に確認していく単純な方法。運が悪いと最後まで見ないと見つからない。</p>
+            
+            <div class="flex justify-between items-center mb-2">
+              <button onclick="runLinearSearch()" id="btn-linear" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded text-sm font-bold transition-colors">
+                <i class="fas fa-play mr-1"></i> 探索開始
+              </button>
+              <div class="text-right">
+                <div class="text-xs text-slate-500">チェック回数</div>
+                <div class="text-xl font-mono font-bold text-white" id="linear-count">0</div>
+              </div>
+            </div>
+
+            <!-- 配列表示エリア -->
+            <div id="linear-grid" class="grid grid-cols-10 gap-1 mt-4">
+              <!-- JSで100個生成 -->
+            </div>
+          </div>
+
+          <!-- 右: バイナリサーチ -->
+          <div class="flex-1 bg-slate-900 rounded-xl p-4 border border-blue-900 relative shadow-[0_0_15px_rgba(59,130,246,0.1)]">
+            <div class="absolute -top-3 -right-3 bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-lg transform rotate-12">プロ御用達!</div>
+            <h3 class="text-lg font-bold text-blue-300 mb-2 border-b border-slate-700 pb-2">
+              <i class="fas fa-bolt text-yellow-400 mr-2"></i> 二分探索 (バイナリサーチ)
+            </h3>
+            <p class="text-xs text-blue-200/70 mb-4 h-12">「真ん中を見て、大きいか小さいかで半分に絞る」を繰り返す超高速な方法。（※データが順番に並んでいる時だけ使える）</p>
+            
+            <div class="flex justify-between items-center mb-2">
+              <button onclick="runBinarySearch()" id="btn-binary" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded text-sm font-bold transition-colors shadow-[0_0_10px_rgba(37,99,235,0.4)]">
+                <i class="fas fa-play mr-1"></i> 探索開始
+              </button>
+              <div class="text-right">
+                <div class="text-xs text-slate-500">チェック回数</div>
+                <div class="text-xl font-mono font-bold text-blue-400" id="binary-count">0</div>
+              </div>
+            </div>
+
+            <!-- 配列表示エリア -->
+            <div id="binary-grid" class="grid grid-cols-10 gap-1 mt-4">
+              <!-- JSで100個生成 -->
+            </div>
+          </div>
+        </div>
+
+        <!-- プロの解説 -->
+        <div class="mt-6 bg-slate-700/50 rounded-lg p-4 flex gap-4 border border-slate-600 items-center">
+          <div class="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center border-2 border-cyan-500 flex-shrink-0">
+            <i class="fas fa-laptop-code text-cyan-400 text-xl"></i>
+          </div>
+          <div>
+            <h4 class="font-bold text-cyan-300 text-sm">プログラマーの思考</h4>
+            <p class="text-sm text-slate-300 mt-1">
+              「もしデータが100万件あったら、リニアサーチは最悪100万回探さないといけない。でもバイナリサーチなら、半分に絞り続けるから**たった20回**で見つかるんだ。<br>
+              だからプロは、データを保存するときに別のアルゴリズム（ソート）を使って**『あらかじめ順番に並べ替えておく』**という工夫をして、この高速なバイナリサーチを使えるようにするんだよ。」
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ユースケース2: 経路探索（迷路） -->
+    <section class="bg-slate-800 rounded-2xl border border-slate-700 shadow-2xl overflow-hidden">
+      <div class="bg-gradient-to-r from-emerald-900 to-slate-800 p-4 border-b border-slate-700 flex items-center justify-between">
+        <h2 class="text-2xl font-bold text-white"><i class="fas fa-route text-emerald-400 mr-2"></i> ユースケース 2：「最短の道を探す」アルゴリズム</h2>
+        <span class="bg-emerald-800 text-emerald-200 text-xs px-2 py-1 rounded font-mono border border-emerald-600">Pathfinding</span>
+      </div>
+      
+      <div class="p-6">
+        <div class="mb-6 text-slate-300 text-sm leading-relaxed">
+          <p class="mb-2"><strong>【プロの現場】</strong> カーナビのルート検索、ゲームの敵がプレイヤーを追いかける動き、ネットワークの通信経路決めに使われます。</p>
+          <p>ここでは**「幅優先探索（BFS）」**というアルゴリズムを使います。<br>
+          水面に石を投げたときの「波紋」のように、スタート地点からジワジワと全方向に探索を広げていくことで、壁（障害物）を避けながら**確実に最短ルートを見つけ出す**賢い方法です。</p>
+        </div>
+
+        <div class="flex flex-col lg:flex-row gap-6">
+          <!-- 迷路エリア -->
+          <div class="flex-1 bg-slate-900 p-4 rounded-xl border border-slate-700 flex flex-col items-center">
+            <div class="flex gap-4 mb-4 w-full justify-center">
+              <button onclick="generateMaze()" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded text-sm font-bold transition-colors">
+                <i class="fas fa-random mr-1"></i> 壁を作り直す
+              </button>
+              <button onclick="startPathfinding()" id="btn-path" class="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2 rounded text-sm font-bold transition-colors shadow-[0_0_10px_rgba(16,185,129,0.4)]">
+                <i class="fas fa-play mr-1"></i> 最短ルート探索開始！
+              </button>
+            </div>
+            
+            <div id="maze-grid" class="grid gap-1 bg-slate-800 p-2 rounded-lg border border-slate-600" style="grid-template-columns: repeat(15, 1fr);">
+              <!-- JSで迷路生成 (15x15) -->
+            </div>
+            
+            <div class="flex gap-4 mt-4 text-xs text-slate-400">
+              <div class="flex items-center"><div class="w-3 h-3 bg-blue-500 mr-1 rounded-sm"></div>スタート</div>
+              <div class="flex items-center"><div class="w-3 h-3 bg-red-500 mr-1 rounded-sm"></div>ゴール</div>
+              <div class="flex items-center"><div class="w-3 h-3 bg-slate-600 mr-1 rounded-sm"></div>壁</div>
+              <div class="flex items-center"><div class="w-3 h-3 bg-blue-300 mr-1 rounded-sm"></div>探索した波紋</div>
+              <div class="flex items-center"><div class="w-3 h-3 bg-yellow-400 mr-1 rounded-sm"></div>最短ルート！</div>
+            </div>
+          </div>
+
+          <!-- 思考ログエリア -->
+          <div class="w-full lg:w-1/3 bg-slate-900 rounded-xl border border-slate-700 flex flex-col">
+            <div class="p-3 border-b border-slate-700 bg-slate-800/50 rounded-t-xl">
+              <h3 class="text-sm font-bold text-slate-300"><i class="fas fa-terminal mr-2"></i>アルゴリズムの処理ログ</h3>
+            </div>
+            <div id="maze-log" class="p-4 flex-1 overflow-y-auto font-mono text-[10px] sm:text-xs text-emerald-400 h-64 lg:h-auto space-y-1">
+              <div class="text-slate-500">// 実行待機中...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    /* =================================================================
+       ユーティリティ
+       ================================================================= */
+    const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+    /* =================================================================
+       ユースケース1: 探索アルゴリズム (Search)
+       ================================================================= */
+    let targetNum = 73;
+    const arraySize = 100;
+    let isSearching = false;
+
+    // 初期化処理
+    function initSearchArea() {
+      const linearGrid = document.getElementById('linear-grid');
+      const binaryGrid = document.getElementById('binary-grid');
+      linearGrid.innerHTML = '';
+      binaryGrid.innerHTML = '';
+      
+      for (let i = 1; i <= arraySize; i++) {
+        const createCell = () => {
+          const div = document.createElement('div');
+          div.className = 'search-cell bg-slate-800 border border-slate-700 text-slate-400 text-[10px] flex items-center justify-center h-6 rounded-sm font-mono';
+          div.textContent = i;
+          div.id = `cell-TYPE-${i}`; // TYPEは後で置換
+          return div;
+        };
+        
+        const lCell = createCell();
+        lCell.id = `cell-linear-${i}`;
+        linearGrid.appendChild(lCell);
+        
+        const bCell = createCell();
+        bCell.id = `cell-binary-${i}`;
+        binaryGrid.appendChild(bCell);
+      }
+      
+      document.getElementById('target-number').textContent = targetNum;
+      document.getElementById('target-number-display').textContent = targetNum;
+      document.getElementById('linear-count').textContent = '0';
+      document.getElementById('binary-count').textContent = '0';
+    }
+
+    function randomizeTarget() {
+      if (isSearching) return;
+      targetNum = Math.floor(Math.random() * arraySize) + 1;
+      initSearchArea();
+    }
+
+    // リニアサーチ（線形探索）の実行
+    async function runLinearSearch() {
+      if (isSearching) return;
+      isSearching = true;
+      document.getElementById('btn-linear').disabled = true;
+      
+      let count = 0;
+      const countDisplay = document.getElementById('linear-count');
+      
+      for (let i = 1; i <= arraySize; i++) {
+        count++;
+        countDisplay.textContent = count;
+        const cell = document.getElementById(`cell-linear-${i}`);
+        
+        // チェック中
+        cell.classList.add('search-checking');
+        await sleep(30); // 演出用スピード
+        
+        if (i === targetNum) {
+          cell.classList.remove('search-checking');
+          cell.classList.add('search-found');
+          break; // 見つけたら終了
+        } else {
+          cell.classList.remove('search-checking');
+          cell.classList.add('search-eliminated');
+        }
+      }
+      
+      document.getElementById('btn-linear').disabled = false;
+      isSearching = false;
+    }
+
+    // バイナリサーチ（二分探索）の実行
+    async function runBinarySearch() {
+      if (isSearching) return;
+      isSearching = true;
+      document.getElementById('btn-binary').disabled = true;
+      
+      let count = 0;
+      const countDisplay = document.getElementById('binary-count');
+      let left = 1;
+      let right = arraySize;
+      
+      while (left <= right) {
+        count++;
+        countDisplay.textContent = count;
+        
+        let mid = Math.floor((left + right) / 2);
+        const cell = document.getElementById(`cell-binary-${mid}`);
+        
+        // 真ん中をチェック
+        cell.classList.add('search-checking');
+        await sleep(500); // わかりやすく少し遅めに
+        
+        if (mid === targetNum) {
+          cell.classList.remove('search-checking');
+          cell.classList.add('search-found');
+          break; // 見つけた
+        } else {
+          cell.classList.remove('search-checking');
+          cell.classList.add('search-eliminated'); // 違った
+          
+          // 絞り込みのアニメーション（除外された範囲を暗くする）
+          if (mid < targetNum) {
+            // 右半分を探す（左半分は除外）
+            for(let i=left; i<=mid; i++) {
+              document.getElementById(`cell-binary-${i}`).classList.add('search-eliminated');
+            }
+            left = mid + 1;
+          } else {
+            // 左半分を探す（右半分は除外）
+            for(let i=mid; i<=right; i++) {
+              document.getElementById(`cell-binary-${i}`).classList.add('search-eliminated');
+            }
+            right = mid - 1;
+          }
+        }
+        await sleep(300);
+      }
+      
+      document.getElementById('btn-binary').disabled = false;
+      isSearching = false;
+    }
+
+
+    /* =================================================================
+       ユースケース2: 経路探索 (BFS)
+       ================================================================= */
+    const mazeRows = 15;
+    const mazeCols = 15;
+    let maze = []; // 0: 道, 1: 壁, 2: スタート, 3: ゴール
+    let startPos = { r: 1, c: 1 };
+    let goalPos = { r: 13, c: 13 };
+    let isPathfinding = false;
+
+    // 迷路の生成と描画
+    function generateMaze() {
+      if (isPathfinding) return;
+      
+      const grid = document.getElementById('maze-grid');
+      grid.innerHTML = '';
+      maze = Array(mazeRows).fill().map(() => Array(mazeCols).fill(0));
+      
+      // ランダムに壁を配置 (確率30%)
+      for (let r = 0; r < mazeRows; r++) {
+        for (let c = 0; c < mazeCols; c++) {
+          if (Math.random() < 0.3) {
+            maze[r][c] = 1;
+          }
+        }
+      }
+      
+      // スタートとゴールの周辺は必ず空ける（閉じ込め防止）
+      maze[startPos.r][startPos.c] = 2;
+      maze[startPos.r+1][startPos.c] = 0;
+      maze[startPos.r][startPos.c+1] = 0;
+      
+      maze[goalPos.r][goalPos.c] = 3;
+      maze[goalPos.r-1][goalPos.c] = 0;
+      maze[goalPos.r][goalPos.c-1] = 0;
+      
+      // DOM生成
+      for (let r = 0; r < mazeRows; r++) {
+        for (let c = 0; c < mazeCols; c++) {
+          const cell = document.createElement('div');
+          cell.id = `m-${r}-${c}`;
+          cell.className = 'maze-cell w-full aspect-square rounded-sm text-[8px] flex items-center justify-center font-bold';
+          
+          if (maze[r][c] === 1) {
+            cell.classList.add('maze-wall');
+          } else if (maze[r][c] === 2) {
+            cell.classList.add('maze-start');
+            cell.innerHTML = '<i class="fas fa-play"></i>';
+          } else if (maze[r][c] === 3) {
+            cell.classList.add('maze-goal');
+            cell.innerHTML = '<i class="fas fa-star"></i>';
+          } else {
+            cell.classList.add('bg-slate-700');
+          }
+          
+          grid.appendChild(cell);
+        }
+      }
+      
+      document.getElementById('maze-log').innerHTML = '<div class="text-slate-500">// 新しい迷路を生成しました。準備OK。</div>';
+    }
+
+    function logMaze(msg, type = "normal") {
+      const logArea = document.getElementById('maze-log');
+      const div = document.createElement('div');
+      
+      if (type === "error") div.className = "text-red-400";
+      else if (type === "success") div.className = "text-yellow-400 font-bold bg-yellow-900/30 p-1 rounded";
+      else div.className = "text-emerald-400";
+      
+      div.innerHTML = `> ${msg}`;
+      logArea.appendChild(div);
+      logArea.scrollTop = logArea.scrollHeight;
+    }
+
+    // 幅優先探索 (BFS) アニメーション
+    async function startPathfinding() {
+      if (isPathfinding) return;
+      isPathfinding = true;
+      document.getElementById('btn-path').disabled = true;
+      
+      // 前回の探索結果をクリア
+      for (let r = 0; r < mazeRows; r++) {
+        for (let c = 0; c < mazeCols; c++) {
+          if (maze[r][c] === 0) {
+            const cell = document.getElementById(`m-${r}-${c}`);
+            cell.className = 'maze-cell w-full aspect-square rounded-sm bg-slate-700';
+          }
+        }
+      }
+      document.getElementById('maze-log').innerHTML = '';
+      logMaze("探索アルゴリズム「BFS（幅優先探索）」起動...", "normal");
+
+      // BFSの準備
+      const queue = [{ r: startPos.r, c: startPos.c, path: [] }];
+      const visited = Array(mazeRows).fill().map(() => Array(mazeCols).fill(false));
+      visited[startPos.r][startPos.c] = true;
+      
+      const dr = [-1, 1, 0, 0]; // 上下
+      const dc = [0, 0, -1, 1]; // 左右
+      
+      let found = false;
+      let finalPath = [];
+
+      // 探索ループ
+      while (queue.length > 0) {
+        const current = queue.shift();
+        const r = current.r;
+        const c = current.c;
+        const path = current.path;
+
+        if (maze[r][c] === 3) {
+          found = true;
+          finalPath = path;
+          break; // ゴール発見
+        }
+
+        // 波紋のように探索済みセルを塗る（スタートとゴール以外）
+        if (maze[r][c] === 0) {
+          const cell = document.getElementById(`m-${r}-${c}`);
+          cell.classList.replace('bg-slate-700', 'maze-visited');
+        }
+
+        // 上下左右を確認
+        for (let i = 0; i < 4; i++) {
+          const nr = r + dr[i];
+          const nc = c + dc[i];
+
+          // 迷路の範囲内か？ ＆ 壁じゃないか？ ＆ まだ行ってないか？
+          if (nr >= 0 && nr < mazeRows && nc >= 0 && nc < mazeCols && maze[nr][nc] !== 1 && !visited[nr][nc]) {
+            visited[nr][nc] = true;
+            queue.push({ r: nr, c: nc, path: [...path, {r: nr, c: nc}] });
+          }
+        }
+        
+        // 探索スピード（演出）
+        if(queue.length % 3 === 0) { // 少し間引きして高速化
+           await sleep(10);
+        }
+      }
+
+      // 結果の表示
+      if (found) {
+        logMaze("ゴール到達！ルートを逆算して描画します。", "success");
+        // ゴール自体はパスから除く
+        finalPath.pop(); 
+        
+        // 最短ルートを黄色く塗る
+        for (let step of finalPath) {
+          const cell = document.getElementById(`m-${step.r}-${step.c}`);
+          cell.classList.replace('maze-visited', 'maze-path');
+          await sleep(30);
+        }
+        logMaze(`最短ルート確定。距離: ${finalPath.length + 1} 歩`, "success");
+      } else {
+        logMaze("エラー：ゴールへの道が壁で塞がれています。", "error");
+      }
+
+      document.getElementById('btn-path').disabled = false;
+      isPathfinding = false;
+    }
+
+    // 初期化実行
+    window.onload = () => {
+      initSearchArea();
+      generateMaze();
+    };
+
+  </script>
+</body>
+</html>
+
+
+```
